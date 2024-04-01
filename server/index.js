@@ -7,6 +7,8 @@ const app = express();
 
 connectDb();
 
+app.use(express.json());
+
 app.get('/',(req,res)=>{
   res.send("<h1>Backend @ Blog-website</h1>")
 });
