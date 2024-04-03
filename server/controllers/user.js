@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/user.js");
+const jwt = require("jsonwebtoken");
 
 // upload profile left
 const registerUser = async (req, res) => {
@@ -52,15 +53,26 @@ const logInUser = async (req, res) => {
     const isUser = await User.findOne({ email: email });
     if (!isUser) return res.status(404).json("User not found");
     // check password
-    const isMatch = await bcrypt.compare(password,isUser.password);
-    if(!isMatch) return res.status(403).json("Invalid password")
-    // generate token
-const token = "jwt"
+    const isMatch = await bcrypt.compare(password, isUser.password);
+    if (!isMatch) return res.status(403).json("Invalid password");
+    // generate token using HS256 algo
+    const token = await jwt.sign(
+      { id: isUser._id, email: isUser.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    // Convert mongooDB obj to JS obj
+    const loggedInUser = { ...isUser.toObject(), token };
+    delete loggedInUser.password;
     // send to frontend
+    return res
+      .status(202)
+      .json({ messgae: "Login successful", data: loggedInUser });
   } catch (error) {
     console.log("Error in User login ", error);
     res.status(500).json(error.message);
   }
 };
+
 
 module.exports = { registerUser, logInUser };
