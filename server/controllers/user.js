@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/user.js");
 const jwt = require("jsonwebtoken");
+const { cloudinaryUplaod } = require("../middleware/cloudinary.js");
 
 // upload profile left
 const registerUser = async (req, res) => {
@@ -19,6 +20,7 @@ const registerUser = async (req, res) => {
     // Hashing plain text password
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
+    const response = await cloudinaryUplaod(req.file.path);
     // user registration
     const newUser = await User.create({
       firstName,
@@ -28,6 +30,7 @@ const registerUser = async (req, res) => {
       gender,
       age,
       userName,
+      profile:response.url,
     });
 
     const user = await User.findById(newUser._id).select("-password");
