@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user.js");
 const jwt = require("jsonwebtoken");
 const { cloudinaryUplaod } = require("../middleware/cloudinary.js");
+const sendMail = require("../utils/nodeMailer.js");
 
 // upload profile left
 const registerUser = async (req, res) => {
@@ -30,9 +31,9 @@ const registerUser = async (req, res) => {
       gender,
       age,
       userName,
-      profile:response.url,
+      profile: response.url,
     });
-
+    await sendMail(email, "Sending Email using Node.js", "Text");
     const user = await User.findById(newUser._id).select("-password");
 
     return res
@@ -45,6 +46,7 @@ const registerUser = async (req, res) => {
       .json(`Error while user registration ${error.message}`);
   }
 };
+
 const logInUser = async (req, res) => {
   try {
     // destructure
@@ -77,5 +79,18 @@ const logInUser = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword.trim())
+      return res.status(400).json("New password required");
+    const hash = await bcrypt.hash(newPassword, 10);
+    const user = await User.findByIdAndUpdate(req.user._id, { password: hash });
+    return res.status(200).json("Password updated successfully");
+  } catch (error) {
+    console.error("Error in change password ", error);
+    return res.status(500).json(error.message);
+  }
+};
 
-module.exports = { registerUser, logInUser };
+module.exports = { registerUser, logInUser, changePassword };
